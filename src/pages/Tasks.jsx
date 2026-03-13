@@ -121,16 +121,45 @@ export default function Tasks() {
         return <div className="flex justify-center items-center h-64 text-red-500">Error: {error}</div>;
     }
 
+    const generateTask = async () => {
+        try {
+            const res = await fetch(
+                "https://ttweevkkvqpjzbmrnack.supabase.co/functions/v1/generate-task",
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
+                    },
+                    body: JSON.stringify({
+                        role: "fullstack"
+                    })
+                }
+            )
+
+            const data = await res.json()
+
+            console.log("Generated task:", data)
+        } catch (err) {
+            console.error(err)
+        }
+    }
+
     return (
         <div className="flex flex-col gap-8 pb-10">
             {/* Header */}
-            <div>
-                <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
-                    My Tasks
-                </h1>
-                <p className="text-gray-500 dark:text-gray-400 mt-2">
-                    {filteredTasks.length} {filteredTasks.length === 1 ? 'task' : 'tasks'} · {tasks.filter(t => t.status === 'completed').length} completed
-                </p>
+            <div className="flex items-center justify-between">
+                <div>
+                    <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
+                        My Tasks
+                    </h1>
+                    <p className="text-gray-500 dark:text-gray-400 mt-2">
+                        {filteredTasks.length} {filteredTasks.length === 1 ? 'task' : 'tasks'} · {tasks.filter(t => t.status === 'completed').length} completed
+                    </p>
+                </div>
+                <Button onClick={generateTask} size="sm" className="gap-2 shrink-0">
+                    <Zap className="h-4 w-4" /> Generate Task
+                </Button>
             </div>
 
             {/* Search and Filters */}
@@ -215,9 +244,9 @@ export default function Tasks() {
                     </div>
 
                     <div className="flex items-end">
-                        <Button 
-                            variant="secondary" 
-                            size="sm" 
+                        <Button
+                            variant="secondary"
+                            size="sm"
                             className="w-full"
                             onClick={() => {
                                 setSearchQuery('');
@@ -240,7 +269,7 @@ export default function Tasks() {
                         <AlertCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                         <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">No tasks found</h3>
                         <p className="text-gray-500 dark:text-gray-400 mb-4">Try adjusting your filters</p>
-                        <Button 
+                        <Button
                             variant="ghost"
                             onClick={() => {
                                 setSearchQuery('');
@@ -279,31 +308,30 @@ export default function Tasks() {
                                                         {task.company}
                                                     </Badge>
                                                 </div>
-                            </div>
-                        </div>
-                        <div className="flex flex-col items-end gap-2">
-                            <div className={`flex items-center gap-1 text-sm font-medium ${
-                                isOverdue(task.deadline) ? 'text-red-500' : 'text-gray-500 dark:text-gray-400'
-                            }`}>
-                                <Clock className="h-4 w-4" />
-                                {isOverdue(task.deadline) ? '⚠️ ' : ''}{formatDate(task.deadline)}
-                            </div>
-                            <div className="text-xs text-gray-500 dark:text-gray-400">
-                                {task.estimatedTime}
-                            </div>
-                        </div>
-                    </div>
+                                            </div>
+                                        </div>
+                                        <div className="flex flex-col items-end gap-2">
+                                            <div className={`flex items-center gap-1 text-sm font-medium ${isOverdue(task.deadline) ? 'text-red-500' : 'text-gray-500 dark:text-gray-400'
+                                                }`}>
+                                                <Clock className="h-4 w-4" />
+                                                {isOverdue(task.deadline) ? '⚠️ ' : ''}{formatDate(task.deadline)}
+                                            </div>
+                                            <div className="text-xs text-gray-500 dark:text-gray-400">
+                                                {task.estimatedTime}
+                                            </div>
+                                        </div>
+                                    </div>
 
-                    {task.description && (
-                        <div className="mt-4 pt-4 border-t border-gray-200 dark:border-dark-700">
-                            <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
-                                {task.description.split('\n')[0].replace('## ', '')}
-                            </p>
-                        </div>
-                    )}
-                </Link>
-            </CardContent>
-        </Card>
+                                    {task.description && (
+                                        <div className="mt-4 pt-4 border-t border-gray-200 dark:border-dark-700">
+                                            <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
+                                                {task.description.split('\n')[0].replace('## ', '')}
+                                            </p>
+                                        </div>
+                                    )}
+                                </Link>
+                            </CardContent>
+                        </Card>
                     ))}
                 </div>
             )}
