@@ -4,8 +4,26 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../co
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { ProgressBar } from '../components/ui/ProgressBar';
-import { Search, Filter, Clock, Zap, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Search, Filter, Clock, Zap, RefreshCcw, CheckCircle2, AlertCircle } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+
+function RefreshStatusButton({ countdown, isCounting, onClick }) {
+    return (
+        <button
+            type="button"
+            title="Refresh Tasks"
+            onClick={onClick}
+            disabled={isCounting}
+            className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-dark-700 dark:bg-dark-800 dark:text-gray-100 dark:hover:bg-dark-700"
+        >
+            {isCounting && countdown > 0 ? (
+                <span className="text-sm font-semibold">{countdown}</span>
+            ) : (
+                <RefreshCcw className="h-4 w-4" />
+            )}
+        </button>
+    );
+}
 
 export default function Tasks() {
     const [searchQuery, setSearchQuery] = useState('');
@@ -16,6 +34,8 @@ export default function Tasks() {
     const [tasks, setTasks] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [countdown, setCountdown] = useState(null);
+    const [isCounting, setIsCounting] = useState(false);
 
     useEffect(() => {
         const fetchTasks = async () => {
@@ -69,6 +89,50 @@ export default function Tasks() {
 
         return result;
     }, [tasks, searchQuery, roleFilter, difficultyFilter, statusFilter, sortBy]);
+
+    const startRefreshCountdown = () => {
+        if (isCounting) {
+            return;
+        }
+
+        setCountdown(7);
+        setIsCounting(true);
+    };
+
+    const handleRefreshButtonClick = () => {
+        if (isCounting) {
+            return;
+        }
+
+        if (countdown === null) {
+            startRefreshCountdown();
+            return;
+        }
+
+        if (countdown === 0) {
+            window.location.reload();
+        }
+    };
+
+    useEffect(() => {
+        if (!isCounting || countdown === null) {
+            return;
+        }
+
+        const interval = setInterval(() => {
+            setCountdown((prevCount) => Math.max(prevCount - 1, 0));
+        }, 1000);
+
+        return () => clearInterval(interval);
+    }, [isCounting]);
+
+    useEffect(() => {
+        if (countdown === 0) {
+            setIsCounting(false);
+            setCountdown(null);
+            window.location.reload();
+        }
+    }, [countdown]);
 
     const getStatusIcon = (status) => {
         switch (status) {
@@ -157,9 +221,23 @@ export default function Tasks() {
                         {filteredTasks.length} {filteredTasks.length === 1 ? 'task' : 'tasks'} · {tasks.filter(t => t.status === 'completed').length} completed
                     </p>
                 </div>
-                <Button onClick={generateTask} size="sm" className="gap-2 shrink-0">
-                    <Zap className="h-4 w-4" /> Generate Task
-                </Button>
+                <div className="flex items-center gap-2">
+                    <RefreshStatusButton
+                        countdown={countdown}
+                        isCounting={isCounting}
+                        onClick={handleRefreshButtonClick}
+                    />
+                    <Button
+                        onClick={() => {
+                            generateTask();
+                            startRefreshCountdown();
+                        }}
+                        size="sm"
+                        className="gap-2 shrink-0"
+                    >
+                        <Zap className="h-4 w-4" /> Generate Task
+                    </Button>
+                </div>
             </div>
 
             {/* Search and Filters */}
